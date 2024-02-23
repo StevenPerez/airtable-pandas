@@ -1,0 +1,40 @@
+import requests
+import pandas as pd
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
+base_id = 'appr######'  
+table_name = 'tbl#######' 
+api_key = 'your apikey complete'  ##example:'patR54########.###################################d708#################' 
+url = f'https://api.airtable.com/v0/{base_id}/{table_name}'
+headers = {
+    'Authorization': f'Bearer {api_key}',
+}
+
+
+data_list = []
+
+offset = None
+
+while True:
+    params = {'maxRecords': 10000000}
+    if offset:
+        params['offset'] = offset
+
+    response = requests.get(url, headers=headers, params=params)
+
+    if response.status_code == 200:
+        data = response.json()
+        records = data.get('records', [])
+        data_list.extend([record.get('fields') for record in records])
+        
+        if 'offset' in data:
+            offset = data['offset']
+        else:
+            break
+    else:
+        print(f'Error en la solicitud: {response.status_code}')
+        break
+
+df = pd.DataFrame(data_list)
+
+print(f'Número total de registros: {len(df)}')
